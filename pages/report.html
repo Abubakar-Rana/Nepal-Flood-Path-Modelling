@@ -356,20 +356,13 @@ svg.flow .fa{fill:none;stroke:var(--ink-2);stroke-width:1.3}
   <div class="col">
     <ul class="body">
       <li><b>Elevation:</b> SRTM v3, 1 arc-second tiles, resampled to 60 m.</li>
-      <li><b>River map data:</b> OpenStreetMap river and canal lines, used for stream burning.</li>
+      <li><b>River map data:</b> OpenStreetMap river and canal lines.</li>
       <li><b>Flood start point:</b> Trishuli flood start point as reported by UNOSAT.</li>
-      <li><b>Observed flood extent:</b> Sentinel-1 flood mask, used only for scoring.</li>
       <li><b>Exposure:</b> OpenStreetMap buildings, roads and bridges; hydropower asset layer; district boundaries.</li>
-      <li><b>Imagery:</b> PlanetScope pre- and post-event pair.</li>
     </ul>
   </div>
 </section>
 
-<footer>
-  <p>D8 routing on SRTM v3, resampled to 60 m in UTM 45N over 83.60–86.00° E,
-  27.15–29.00° N (13.9 million cells). Channel network 9 149 km. Built with
-  pysheds, rasterio and geopandas. Sentinel-1 extent used for scoring only.</p>
-</footer>
 
 </div>
 
