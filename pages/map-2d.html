@@ -158,10 +158,9 @@ a{color:var(--accent)}
 
   <div class="fix">
     <h3>Possible Flood Spread Calculation</h3>
-    <p>A spot turns red once the flood front passes the point on the main river
-    it drains to, if its ground sits less than the chosen flood depth above the
-    river. The shade shows water depth (flood depth minus ground height above the
-    river), so it is darkest in the channel.</p>
+    <p>A pixel turns red when its ground elevation is lower than the flood-water
+    level of the nearest river pixel. Flood spread is calculated as the river
+    flood depth minus the pixel’s ground height above the river.</p>
   </div>
 
   <div class="stage">
