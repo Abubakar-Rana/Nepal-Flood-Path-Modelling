@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trishuli Flood Model</title>
+<meta name="description" content="Terrain flow-routing model of the 26 August 2026 Trishuli glacial-lake outburst: 2D spread map, 3D terrain view and full report.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%231c5cab'/%3E%3Cpath d='M4 20c4-4 8 4 12 0s8 4 12 0v8H4z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --ground:#ffffff; --panel:#f7f9fa; --ink:#101619; --ink-2:#4e5b64;
+  --ink-3:#77848c; --rule:#dbe2e5; --accent:#1c5cab; --route:#c8511d;
+}
+:root[data-theme="dark"]{
+  --ground:#0f1417; --panel:#161d21; --ink:#e9eff1; --ink-2:#9dabb3;
+  --ink-3:#75838b; --rule:#242e34; --accent:#6da7ec; --route:#eb6834;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);display:flex;flex-direction:column;
+  font-family:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif}
+header{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:0 16px;
+  background:var(--panel);border-bottom:1px solid var(--rule);flex:0 0 auto}
+.brand{display:flex;flex-direction:column;padding:10px 0;min-width:0}
+.brand b{font-size:1.05rem;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.brand span{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+nav{display:flex;gap:2px;align-self:stretch;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;margin-left:auto}
+nav::-webkit-scrollbar{display:none}
+nav a{display:flex;align-items:center;padding:0 16px;min-height:48px;font-size:.92rem;
+  font-weight:600;color:var(--ink-2);text-decoration:none;white-space:nowrap;
+  border-bottom:3px solid transparent}
+nav a:hover{color:var(--ink)}
+nav a[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--route)}
+nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.newtab{font-size:.78rem;color:var(--ink-3);text-decoration:none;white-space:nowrap}
+.newtab:hover{color:var(--accent)}
+.theme{font:inherit;font-size:.8rem;font-weight:600;color:var(--ink-2);background:transparent;
+  border:1px solid var(--rule);border-radius:2px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.theme:hover{color:var(--ink);border-color:var(--ink-3)}
+.theme:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{position:relative;flex:1 1 auto;min-height:0}
+main iframe{position:absolute;inset:0;width:100%;height:100%;border:0;
+  background:var(--ground);visibility:hidden}
+main iframe.on{visibility:visible}
+@media (max-width:640px){
+  header{gap:0;padding:0 12px;position:relative}
+  .brand{padding:8px 0 2px;width:100%;padding-right:90px}
+  .theme{position:absolute;right:12px;top:10px}
+  nav{margin-left:0;width:100%}
+  nav a{padding:0 12px;flex:1 1 auto;justify-content:center}
+  .newtab{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <b>Trishuli–Narayani Flood Model</b>
+    <span>26 Aug 2026 outburst · Nepal → India</span>
+  </div>
+  <nav role="tablist" aria-label="Views">
+    <a role="tab" href="#2d" data-tab="2d" data-src="pages/map-2d.html">2D spread map</a>
+    <a role="tab" href="#3d" data-tab="3d" data-src="pages/map-3d.html">3D terrain</a>
+    <a role="tab" href="#report" data-tab="report" data-src="pages/report.html">Full report</a>
+  </nav>
+  <a class="newtab" id="newtab" href="pages/map-2d.html" target="_blank" rel="noopener">Open in new tab ↗</a>
+  <button class="theme" id="theme" type="button" aria-pressed="false">☾ Dark</button>
+</header>
+<main id="views"></main>
+
+<script>
+/* Each view is its own page in an iframe, so their scripts and element ids
+   never collide. Frames load on first visit and then stay alive (hidden with
+   visibility, not display, so the WebGL and canvas views keep their size and
+   state when you switch back). */
+const tabs = [...document.querySelectorAll("nav a")];
+const views = document.getElementById("views");
+const frames = {};
+
+/* Light by default; dark is the reader's choice, remembered in this browser
+   and passed to each view. */
+const themeBtn = document.getElementById("theme");
+let theme = "light";
+try{ if(localStorage.getItem("theme") === "dark") theme = "dark"; }catch(e){}
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme", theme);
+  document.documentElement.style.colorScheme = theme;
+  themeBtn.textContent = theme === "dark" ? "☀ Light" : "☾ Dark";
+  themeBtn.setAttribute("aria-pressed", theme === "dark");
+  for(const f of Object.values(frames)) f.contentWindow.postMessage({theme}, "*");
+}
+themeBtn.addEventListener("click", () => {
+  theme = theme === "dark" ? "light" : "dark";
+  try{ localStorage.setItem("theme", theme); }catch(e){}
+  applyTheme();
+});
+applyTheme();
+
+function show(name){
+  const tab = tabs.find(t => t.dataset.tab === name) || tabs[0];
+  name = tab.dataset.tab;
+  if(!frames[name]){
+    const f = document.createElement("iframe");
+    f.src = tab.dataset.src;
+    f.title = tab.textContent;
+    f.setAttribute("allow", "fullscreen");
+    f.addEventListener("load", () => f.contentWindow.postMessage({theme}, "*"));
+    views.appendChild(f);
+    frames[name] = f;
+  }
+  for(const t of tabs){
+    const on = t === tab;
+    t.setAttribute("aria-selected", on);
+    t.tabIndex = on ? 0 : -1;
+    if(frames[t.dataset.tab]) frames[t.dataset.tab].classList.toggle("on", on);
+  }
+  document.getElementById("newtab").href = tab.dataset.src;
+  document.title = tab.textContent + " · Trishuli Flood Model";
+}
+
+tabs.forEach((t, i) => t.addEventListener("keydown", e => {
+  const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+  if(!d) return;
+  const next = tabs[(i + d + tabs.length) % tabs.length];
+  next.focus(); location.hash = next.dataset.tab;
+}));
+addEventListener("hashchange", () => show(location.hash.slice(1)));
+show(location.hash.slice(1) || "2d");
+</script>
+</body>
+</html>
